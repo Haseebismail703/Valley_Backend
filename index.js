@@ -50,7 +50,7 @@ app.post("/create-checkout-session", async (req, res) => {
                     quantity: 1,
                 },
             ],
-            success_url: "http://127.0.0.1:5500/sucessPayment.html",
+            success_url: "https://icpih.com/media-intestinal-health-ihsig/PAYMENT-SUCCESS.png",
             cancel_url: "http://127.0.0.1:5500/failed.html",
         });
         res.json({ id: session.id });

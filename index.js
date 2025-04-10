@@ -6,7 +6,6 @@ import route from './src/route/routes.js'
 import cookieParser from 'cookie-parser';
 import path from "path";
 import { fileURLToPath } from "url";
-import Stripe from "stripe";
 
 // Setup __dirname with ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -18,46 +17,16 @@ app.use(express.json())
 app.use(cookieParser());
 
 const corsOptions = {
-    origin: 'http://127.0.0.1:5500', 
+    origin: ['http://127.0.0.1:5500',"https://bowvalleychauffeur.vercel.app"], 
     methods: ['GET', 'POST'],
     credentials: true
 };
 
-// ✅ Apply CORS middleware early (before all routes)
 app.use(cors(corsOptions));
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000
 
-// ✅ Payment Route
-app.post("/create-checkout-session", async (req, res) => {
-    const { amount } = req.body;
-    try {
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ["card"],
-            mode: "payment",
-            line_items: [
-                {
-                    price_data: {
-                        currency: "usd",
-                        product_data: {
-                            name: "Test Product",
-                        },
-                        unit_amount: amount, // $10.00
-                    },
-                    quantity: 1,
-                },
-            ],
-            success_url: "https://icpih.com/media-intestinal-health-ihsig/PAYMENT-SUCCESS.png",
-            cancel_url: "http://127.0.0.1:5500/failed.html",
-        });
-        res.json({ id: session.id });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 app.use('/api', route)
 

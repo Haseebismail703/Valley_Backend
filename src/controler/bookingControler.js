@@ -2,10 +2,10 @@ import Booking from "../model/bookingModel.js";
 import sendMailToAdmin from "../utils/sendMail.js";
 import Payment from "../model/paymentModel.js";
 
-let bookingSlot =  async (req, res) => {
+// Create a new booking
+const bookingSlot = async (req, res) => {
   try {
     const {
-      route,
       dateType,
       dates,
       time,
@@ -18,24 +18,37 @@ let bookingSlot =  async (req, res) => {
       dropoffLocation,
       passengers,
       mobileOnPickupDay,
-      notes,
+      notes
     } = req.body;
 
-    // Check if already booked
-    const existing = await Booking.findOne({
-      time,
-      $or: [
-        { dates: { $in: dates.map(d => new Date(d)) } },
-        { dateType: "recurring", recurringInfo: { $exists: true }, time }
-      ]
-    });
-
-    if (existing) {
-      return res.status(409).json({ message: "Time slot already booked" });
+    // Validate required fields
+    if (!dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
+      !email || !pickupLocation || !dropoffLocation || !passengers) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const booking = new Booking({
-      route,
+    // Validate dateType specific rules
+    if (dateType === 'single' && dates.length !== 1) {
+      return res.status(400).json({
+        error: 'Single date type requires exactly one date'
+      });
+    }
+
+    if (dateType === 'recurring' && !recurringInfo) {
+      return res.status(400).json({
+        error: 'Recurring bookings require recurringInfo'
+      });
+    }
+
+    // Validate email is an array with at least one email
+    if (!Array.isArray(email) || email.length === 0) {
+      return res.status(400).json({
+        error: 'At least one email is required'
+      });
+    }
+
+    // Create new booking
+    const newBooking = new Booking({
       dateType,
       dates,
       time,
@@ -47,57 +60,80 @@ let bookingSlot =  async (req, res) => {
       pickupLocation,
       dropoffLocation,
       passengers,
-      mobileOnPickupDay,
-      notes,
+      mobileOnPickupDay: mobileOnPickupDay || null,
+      notes: notes || null
     });
 
-    await booking.save();
-    // Send email to admin
-    await sendMailToAdmin(booking);
-    res.status(201).json({ message: "Booking successful", booking });
+    const savedBooking = await newBooking.save();
+    await sendMailToAdmin(savedBooking)
+    res.status(201).json({
+      success: true,
+      message: 'Booking created successfully',
+      booking: savedBooking
+    });
 
-  } catch (err) {
-    res.status(500).json({ message: "Booking failed", error: err.message });
+  } catch (error) {
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors
+      });
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return res.status(400).json({
+        error: 'Duplicate booking detected'
+      });
+    }
+
+    // General server error
+    res.status(500).json({
+      error: 'Server error',
+      details: error.message
+    });
   }
 };
+
 
 let availableSlots = async (req, res) => {
   const ALL_TIME_SLOTS = ["6 PM", "12 PM", "12 AM"]; // Define all available time slots
 
   try {
-    const { date } = req.body;
+    const { date } = req.body; // Only date is provided in the request body
+    console.log(req.body)
     if (!date) return res.status(400).json({ message: "Date is required." });
-  
+
     const targetDate = new Date(date);
     const dayName = targetDate.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase(); // Get the day name (e.g., 'monday')
-    const dateOfMonth = targetDate.getDate();
-    const month = targetDate.getMonth();
-    const year = targetDate.getFullYear();
-    
+
+    // Find bookings that match the provided date, regardless of dateType (single, multiple, or recurring)
     const bookings = await Booking.find({
       $or: [
-        // Single date or multiple
-        { 
+        // Handle single and multiple date bookings
+        {
           dateType: { $in: ["single", "multiple"] },
           dates: { $in: [targetDate] }
         },
-        // Recurring bookings
+        // Handle recurring bookings
         {
           dateType: "recurring",
           $or: [
             { "recurringInfo.repeatType": "daily" }, // Every day
             { "recurringInfo.repeatType": `every-${dayName}`, "recurringInfo.timeToRepeat": 1 }, // Every week on the specified day
-            { 
+            {
               "recurringInfo.repeatType": "every_other_thursday",
               "recurringInfo.timeToRepeat": 2, // Every other Thursday (check with timeToRepeat)
               "dates": { $in: [targetDate] }
             },
-            { 
+            {
               "recurringInfo.repeatType": "every-third-thursday",
               "recurringInfo.timeToRepeat": 3, // Every third Thursday
               "dates": { $in: [targetDate] }
             },
-            { 
+            {
               "recurringInfo.repeatType": "every-fourth-thursday",
               "recurringInfo.timeToRepeat": 4, // Every fourth Thursday
               "dates": { $in: [targetDate] }
@@ -106,21 +142,20 @@ let availableSlots = async (req, res) => {
         }
       ]
     });
-  
-    // Extract booked slots
-    const bookedSlots = bookings.map((b) => b.time);
-    
-    // Get available slots
+
+    // Extract booked slots (dates and times)
+    const bookedSlots = bookings.flatMap((b) => b.time);
+
+    // Get available slots by filtering out the booked slots
     const availableSlots = ALL_TIME_SLOTS.filter((slot) => !bookedSlots.includes(slot));
-  
+
     res.json({ date, availableSlots });
-  
+
   } catch (error) {
     console.error("Error checking available slots:", error);
     res.status(500).json({ message: "Server error" });
   }
-  
-}
+};
 
 let savePaymentDetails = async (req, res) => {
   try {
@@ -138,4 +173,4 @@ let savePaymentDetails = async (req, res) => {
     res.status(500).json({ message: "Something went wrong.", error });
   }
 };
-export {bookingSlot,availableSlots,savePaymentDetails}
+export { bookingSlot, availableSlots, savePaymentDetails }

@@ -1,4 +1,3 @@
-// models/Booking.js
 import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
@@ -11,16 +10,8 @@ const bookingSchema = new Schema(
       required: true,
     },
 
-    dates: {
-      type: [Date], // for single or multiple bookings
-      required: true,
-    },
-
-    time: {
-      type: String,
-      required: true,
-      enum: ["6 PM", "12 PM", "12 AM"], // or use 1–24 if needed
-    },
+    dates: [{ type: Date, required: true }],
+    time: [{ type: String, required: true }],
 
     // Advanced Recurring Info
     recurringInfo: {
@@ -37,7 +28,7 @@ const bookingSchema = new Schema(
         ],
       },
       timeToRepeat: {
-        type: Number, // 1 to 24
+        type: Number, // Repeat time interval: 1 to 24
         min: 1,
         max: 24,
       },

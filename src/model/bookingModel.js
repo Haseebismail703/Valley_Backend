@@ -1,11 +1,10 @@
+// models/Booking.js
 import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
 
 const bookingSchema = new Schema(
   {
-    route: { type: String, required: true },
-
     dateType: {
       type: String,
       enum: ["single", "multiple", "recurring"],
@@ -13,13 +12,35 @@ const bookingSchema = new Schema(
     },
 
     dates: {
-      type: [Date], 
+      type: [Date], // for single or multiple bookings
       required: true,
     },
 
+    time: {
+      type: String,
+      required: true,
+      enum: ["6 PM", "12 PM", "12 AM"], // or use 1–24 if needed
+    },
+
+    // Advanced Recurring Info
     recurringInfo: {
-      day: { type: String }, 
-      weeks: { type: Number },
+      repeatType: {
+        type: String,
+        enum: [
+          "daily",
+          "every_thursday",
+          "every_other_thursday",
+          "every_third_thursday",
+          "every_fourth_thursday",
+          "first_of_month",
+          "first_thursday_of_month"
+        ],
+      },
+      timeToRepeat: {
+        type: Number, // 1 to 24
+        min: 1,
+        max: 24,
+      },
     },
 
     firstName: { type: String, required: true },
@@ -42,11 +63,8 @@ const bookingSchema = new Schema(
     mobileOnPickupDay: { type: String, default: null },
     notes: { type: String, default: null },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Booking = model("Booking", bookingSchema);
-
 export default Booking;

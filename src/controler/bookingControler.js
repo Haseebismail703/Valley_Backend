@@ -52,7 +52,8 @@ let bookingSlot =  async (req, res) => {
     });
 
     await booking.save();
-
+    // Send email to admin
+    await sendMailToAdmin(booking);
     res.status(201).json({ message: "Booking successful", booking });
 
   } catch (err) {

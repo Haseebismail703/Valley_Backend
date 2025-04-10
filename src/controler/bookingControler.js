@@ -6,6 +6,7 @@ import Payment from "../model/paymentModel.js";
 const bookingSlot = async (req, res) => {
   try {
     const {
+      route ,
       dateType,
       dates,
       time,
@@ -22,7 +23,7 @@ const bookingSlot = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
+    if ( !route || !dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
       !email || !pickupLocation || !dropoffLocation || !passengers) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -49,6 +50,7 @@ const bookingSlot = async (req, res) => {
 
     // Create new booking
     const newBooking = new Booking({
+      route,
       dateType,
       dates,
       time,

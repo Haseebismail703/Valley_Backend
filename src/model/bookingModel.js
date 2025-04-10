@@ -4,6 +4,10 @@ const { Schema, model } = mongoose;
 
 const bookingSchema = new Schema(
   {
+    route: {
+      type: String,
+      required: true,
+    },
     dateType: {
       type: String,
       enum: ["single", "multiple", "recurring"],

@@ -6,5 +6,5 @@ const router = express.Router();
 router.post('/slots/book',bookingSlot)
 router.post('/slots/available',availableSlots)
 router.post("/save-payment", savePaymentDetails);
-router.post("/create-checkout-session", paymentSession);
+router.post("/create-payment-intent", paymentSession);
 export default router

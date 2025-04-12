@@ -158,4 +158,4 @@ let availableSlots = async (req, res) => {
 };
 
 
-export { bookingSlot, availableSlots, savePaymentDetails }
+export { bookingSlot, availableSlots }

@@ -32,10 +32,6 @@ const sendMailToAdmin = async (bookingData) => {
           <p><strong>Email(s):</strong> ${bookingData.email.join(", ")}</p>
           <p><strong>Mobile on Pickup Day:</strong> ${bookingData.mobileOnPickupDay || "N/A"}</p>
           <p><strong>Notes:</strong> ${bookingData.notes || "N/A"}</p>
-  
-          <div style="margin-top: 20px; text-align: center;">
-            <a href="mailto:${bookingData.email[0]}" style="padding: 10px 20px; background: #004aad; color: white; text-decoration: none; border-radius: 5px;">Reply to User</a>
-          </div>
         </div>
   
         <p style="text-align: center; font-size: 12px; color: #999; margin-top: 15px;">Booking Portal System</p>

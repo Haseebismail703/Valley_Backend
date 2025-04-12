@@ -4,7 +4,7 @@ import sendMailToAdmin from "../utils/sendMail.js";
 const bookingSlot = async (req, res) => {
   try {
     const {
-      route ,
+      route,
       dateType,
       dates,
       time,
@@ -21,12 +21,13 @@ const bookingSlot = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if ( !route || !dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
-      !email || !pickupLocation || !dropoffLocation || !passengers) {
+    if (
+      !route || !dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
+      !email || !pickupLocation || !dropoffLocation || !passengers
+    ) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Validate dateType specific rules
     if (dateType === 'single' && dates.length !== 1) {
       return res.status(400).json({
         error: 'Single date type requires exactly one date'
@@ -39,10 +40,21 @@ const bookingSlot = async (req, res) => {
       });
     }
 
-    // Validate email is an array with at least one email
     if (!Array.isArray(email) || email.length === 0) {
       return res.status(400).json({
         error: 'At least one email is required'
+      });
+    }
+
+    // ✅ Check if slot is already booked
+    const existingBooking = await Booking.findOne({
+      time,
+      dates: { $in: dates }
+    });
+
+    if (existingBooking) {
+      return res.status(400).json({
+        error: 'Slot already booked for selected date(s) and time'
       });
     }
 
@@ -65,7 +77,8 @@ const bookingSlot = async (req, res) => {
     });
 
     const savedBooking = await newBooking.save();
-    await sendMailToAdmin(savedBooking)
+    await sendMailToAdmin(savedBooking);
+
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
@@ -73,7 +86,6 @@ const bookingSlot = async (req, res) => {
     });
 
   } catch (error) {
-    // Handle Mongoose validation errors
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
@@ -82,20 +94,19 @@ const bookingSlot = async (req, res) => {
       });
     }
 
-    // Handle duplicate key errors
     if (error.code === 11000) {
       return res.status(400).json({
         error: 'Duplicate booking detected'
       });
     }
 
-    // General server error
     res.status(500).json({
       error: 'Server error',
       details: error.message
     });
   }
 };
+
 
 
 let availableSlots = async (req, res) => {

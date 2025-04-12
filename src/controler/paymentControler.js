@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-
+import Payment from "../model/paymentModel.js";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 let paymentSession =  async (req, res) => {
@@ -11,7 +11,8 @@ let paymentSession =  async (req, res) => {
             currency: currency,
             payment_method_types: ['card'],
         });
-
+        let createPayment = await new Payment({amount  , currency})
+         await createPayment.save()
         res.send({
             clientSecret: paymentIntent.client_secret,
         });

@@ -1,7 +1,5 @@
 import Booking from "../model/bookingModel.js";
 import sendMailToAdmin from "../utils/sendMail.js";
-import Payment from "../model/paymentModel.js";
-
 // Create a new booking
 const bookingSlot = async (req, res) => {
   try {
@@ -159,20 +157,5 @@ let availableSlots = async (req, res) => {
   }
 };
 
-let savePaymentDetails = async (req, res) => {
-  try {
-    const { cardNumber, cvv, expiryDate, amount } = req.body;
 
-    if (!cardNumber || !cvv || !expiryDate || !amount) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
-
-    const payment = new Payment({ cardNumber, cvv, expiryDate, amount });
-    await payment.save();
-
-    res.status(200).json({ message: "Payment saved successfully." });
-  } catch (error) {
-    res.status(500).json({ message: "Something went wrong.", error });
-  }
-};
 export { bookingSlot, availableSlots, savePaymentDetails }

@@ -106,15 +106,11 @@ const bookingSlot = async (req, res) => {
     });
   }
 };
-
-
-
 let availableSlots = async (req, res) => {
   const ALL_TIME_SLOTS = ["6:00 AM", "12:00 PM", "6:00 PM"]; 
 
   try {
-    const { date } = req.body; // Only date is provided in the request body
-    // console.log(req.body)
+    const { date } = req.body; 
     if (!date) return res.status(400).json({ message: "Date is required." });
 
     const targetDate = new Date(date);

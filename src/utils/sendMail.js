@@ -33,7 +33,6 @@ const sendMailToAdmin = async (bookingData) => {
           <p><strong>Mobile on Pickup Day:</strong> ${bookingData.mobileOnPickupDay || "N/A"}</p>
           <p><strong>Notes:</strong> ${bookingData.notes || "N/A"}</p>
         </div>
-  
         <p style="text-align: center; font-size: 12px; color: #999; margin-top: 15px;">Booking Portal System</p>
       </div>
     `,

@@ -19,7 +19,7 @@ const bookingSlot = async (req, res) => {
       mobileOnPickupDay,
       notes
     } = req.body;
-
+    
     // Validate required fields
     if (
       !route || !dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||

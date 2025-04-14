@@ -43,13 +43,11 @@ const bookingSchema = new Schema(
     phoneNumber: { type: String, required: true },
 
     email: {
-      type: [String],
-      required: true,
-      validate: {
-        validator: (value) => Array.isArray(value) && value.length > 0,
-        message: "At least one email is required",
-      },
+      type: String,
+      required: [true, "Email is required"],
+      match: [/^\S+@\S+\.\S+$/, 'Invalid email format'],
     },
+    
 
     pickupLocation: { type: String, required: true },
     dropoffLocation: { type: String, required: true },

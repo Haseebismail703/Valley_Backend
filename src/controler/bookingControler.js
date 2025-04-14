@@ -19,8 +19,6 @@ const bookingSlot = async (req, res) => {
       mobileOnPickupDay,
       notes
     } = req.body;
-    
-    // Validate required fields
     if (
       !route || !dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
       !email || !pickupLocation || !dropoffLocation || !passengers  || !mobileOnPickupDay 
@@ -40,7 +38,7 @@ const bookingSlot = async (req, res) => {
       });
     }
 
-    if (!Array.isArray(email) || email.length === 0) {
+    if (!Array.isArray(email) || email.length === 0 || email == "") {
       return res.status(400).json({
         error: 'At least one email is required'
       });

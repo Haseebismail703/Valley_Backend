@@ -55,8 +55,8 @@ const bookingSchema = new Schema(
     dropoffLocation: { type: String, required: true },
     passengers: { type: Number, required: true },
 
-    mobileOnPickupDay: { type: String, default: null },
-    notes: { type: String, default: null },
+    mobileOnPickupDay: { type: String, required : true },
+    notes: { type: String, default: null  },
   },
   { timestamps: true }
 );

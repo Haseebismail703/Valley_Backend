@@ -23,7 +23,7 @@ const bookingSlot = async (req, res) => {
     // Validate required fields
     if (
       !route || !dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
-      !email || !pickupLocation || !dropoffLocation || !passengers
+      !email || !pickupLocation || !dropoffLocation || !passengers  || !mobileOnPickupDay 
     ) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -107,6 +107,7 @@ const bookingSlot = async (req, res) => {
   }
 };
 let availableSlots = async (req, res) => {
+  // console.log(req.body)
   const ALL_TIME_SLOTS = ["6:00 AM", "12:00 PM", "6:00 PM"]; 
 
   try {

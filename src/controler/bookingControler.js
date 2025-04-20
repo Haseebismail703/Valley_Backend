@@ -104,44 +104,58 @@ const bookingSlot = async (req, res) => {
     });
   }
 };
-let availableSlots = async (req, res) => {
-  // console.log(req.body)
-  const ALL_TIME_SLOTS = ["6:00 AM", "12:00 PM", "6:00 PM"]; 
 
+let availableSlots = async (req, res) => {
   try {
-    const { date } = req.body; 
+    const { date } = req.body;
     if (!date) return res.status(400).json({ message: "Date is required." });
 
     const targetDate = new Date(date);
-    const dayName = targetDate.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase(); // Get the day name (e.g., 'monday')
+    const dayName = targetDate.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
 
-    // Find bookings that match the provided date, regardless of dateType (single, multiple, or recurring)
+    // Define the range
+    const decStart = new Date(`${targetDate.getFullYear()}-12-01`);
+    const aprilEnd = new Date(`${targetDate.getFullYear() + 1}-04-15`);
+
+    // Adjust for current year crossing
+    if (targetDate < decStart) {
+      decStart.setFullYear(decStart.getFullYear() - 1);
+      aprilEnd.setFullYear(aprilEnd.getFullYear() - 1);
+    }
+
+    // Custom time slot logic
+    let ALL_TIME_SLOTS;
+    if (targetDate >= decStart && targetDate <= aprilEnd) {
+      ALL_TIME_SLOTS = ["9:00 AM", "12:00 PM"];
+    } else {
+      ALL_TIME_SLOTS = ["6:00 AM", "12:00 PM", "6:00 PM"];
+    }
+
+    // Find bookings that match the provided date
     const bookings = await Booking.find({
       $or: [
-        // Handle single and multiple date bookings
         {
           dateType: { $in: ["single", "multiple"] },
           dates: { $in: [targetDate] }
         },
-        // Handle recurring bookings
         {
           dateType: "recurring",
           $or: [
-            { "recurringInfo.repeatType": "daily" }, // Every day
-            { "recurringInfo.repeatType": `every-${dayName}`, "recurringInfo.timeToRepeat": 1 }, // Every week on the specified day
+            { "recurringInfo.repeatType": "daily" },
+            { "recurringInfo.repeatType": `every-${dayName}`, "recurringInfo.timeToRepeat": 1 },
             {
               "recurringInfo.repeatType": "every_other_thursday",
-              "recurringInfo.timeToRepeat": 2, // Every other Thursday (check with timeToRepeat)
+              "recurringInfo.timeToRepeat": 2,
               "dates": { $in: [targetDate] }
             },
             {
               "recurringInfo.repeatType": "every-third-thursday",
-              "recurringInfo.timeToRepeat": 3, // Every third Thursday
+              "recurringInfo.timeToRepeat": 3,
               "dates": { $in: [targetDate] }
             },
             {
               "recurringInfo.repeatType": "every-fourth-thursday",
-              "recurringInfo.timeToRepeat": 4, // Every fourth Thursday
+              "recurringInfo.timeToRepeat": 4,
               "dates": { $in: [targetDate] }
             },
           ]
@@ -149,10 +163,7 @@ let availableSlots = async (req, res) => {
       ]
     });
 
-    // Extract booked slots (dates and times)
     const bookedSlots = bookings.flatMap((b) => b.time);
-
-    // Get available slots by filtering out the booked slots
     const availableSlots = ALL_TIME_SLOTS.filter((slot) => !bookedSlots.includes(slot));
 
     res.json({ date, availableSlots });

@@ -4,6 +4,7 @@ import sendMailToAdmin from "../utils/sendMail.js";
 const bookingSlot = async (req, res) => {
   try {
     const {
+      type,
       route,
       dateType,
       dates,
@@ -20,7 +21,7 @@ const bookingSlot = async (req, res) => {
       notes
     } = req.body;
     if (
-      !route || !dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
+     !type || !route || !dateType || !dates || !time || !firstName || !lastName || !phoneNumber ||
       !email || !pickupLocation || !dropoffLocation || !passengers  || !mobileOnPickupDay 
     ) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -58,6 +59,7 @@ const bookingSlot = async (req, res) => {
 
     // Create new booking
     const newBooking = new Booking({
+      type,
       route,
       dateType,
       dates,
@@ -107,32 +109,46 @@ const bookingSlot = async (req, res) => {
 
 let availableSlots = async (req, res) => {
   try {
-    const { date } = req.body;
-    if (!date) return res.status(400).json({ message: "Date is required." });
+    const { date, type } = req.body;
+    if (!date || !type) return res.status(400).json({ message: "Date and type are required." });
 
     const targetDate = new Date(date);
     const dayName = targetDate.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
 
-    // Define the range
+    // Define winter range
     const decStart = new Date(`${targetDate.getFullYear()}-12-01`);
     const aprilEnd = new Date(`${targetDate.getFullYear() + 1}-04-15`);
 
-    // Adjust for current year crossing
+    // Adjust for year crossing
     if (targetDate < decStart) {
       decStart.setFullYear(decStart.getFullYear() - 1);
       aprilEnd.setFullYear(aprilEnd.getFullYear() - 1);
     }
 
-    // Custom time slot logic
-    let ALL_TIME_SLOTS;
-    if (targetDate >= decStart && targetDate <= aprilEnd) {
-      ALL_TIME_SLOTS = ["9:00 AM", "12:00 PM"];
+    let ALL_TIME_SLOTS = [];
+
+    if (type === "banff-to-calgary") {
+      if (targetDate >= decStart && targetDate <= aprilEnd) {
+        // Winter banff-to-calgary
+        ALL_TIME_SLOTS = ["12:00 PM"];
+      } else {
+        // Summer banff-to-calgary
+        ALL_TIME_SLOTS = ["6:00 AM", "12:00 PM", "6:00 PM"];
+      }
+    } else if (type === "calgary-to-banff") {
+      if (targetDate >= decStart && targetDate <= aprilEnd) {
+        // Winter calgary-to-banff
+        ALL_TIME_SLOTS = ["9:00 AM"];
+      } else {
+        // Summer calgary-to-banff
+        ALL_TIME_SLOTS = ["9:00 AM", "3:00 PM"];
+      }
     } else {
-      ALL_TIME_SLOTS = ["6:00 AM", "12:00 PM", "6:00 PM"];
+      return res.status(400).json({ message: "Invalid type provided." });
     }
 
-    // Find bookings that match the provided date
     const bookings = await Booking.find({
+      type, 
       $or: [
         {
           dateType: { $in: ["single", "multiple"] },
@@ -162,17 +178,20 @@ let availableSlots = async (req, res) => {
         }
       ]
     });
+    
 
-    const bookedSlots = bookings.flatMap((b) => b.time);
-    const availableSlots = ALL_TIME_SLOTS.filter((slot) => !bookedSlots.includes(slot));
+    const bookedSlots = bookings.flatMap((b) => b.time); // already booked times
+const availableSlots = ALL_TIME_SLOTS.filter((slot) => !bookedSlots.includes(slot)); // only unbooked times
 
-    res.json({ date, availableSlots });
+
+    res.json({ date, type, availableSlots });
 
   } catch (error) {
     console.error("Error checking available slots:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 export { bookingSlot, availableSlots }
